@@ -14,6 +14,7 @@ backend/.dockerignore
 .githooks/
 frontend/.dockerignore
 frontend/.gitignore
+backend/api/__pycache__/
 
 # Security: never commit local environment or secret material
 .env
