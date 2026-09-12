@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from uuid import UUID
 
 from database import get_session
@@ -37,6 +38,24 @@ class AdminChangeRoleInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     role: str
+
+
+class AdminUpdateUserInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str | None = None
+    email: EmailStr | None = None
+
+
+class AdminPasswordResetInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    password: str | None = None
+
+
+class AdminPasswordResetResponse(BaseModel):
+    user: AdminUserResponse
+    generated_password: str | None = None
 
 
 @router.get("/users", response_model=list[AdminUserResponse])
@@ -101,6 +120,71 @@ def change_user_role(
     session.commit()
     session.refresh(user)
     return AdminUserResponse.from_model(user)
+
+
+@router.patch("/users/{user_id}", response_model=AdminUserResponse)
+def update_user(
+    user_id: UUID,
+    payload: AdminUpdateUserInput,
+    session: Session = Depends(get_session),
+    current_admin: User = Depends(verify_admin),
+) -> AdminUserResponse:
+    del current_admin
+
+    changes = payload.model_dump(exclude_unset=True)
+    if not changes:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No fields provided")
+
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if "name" in changes:
+        name = str(changes["name"] or "").strip()
+        if not name:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Name cannot be empty")
+        user.name = name
+
+    if "email" in changes:
+        email = str(changes["email"]).lower()
+        existing_user = session.scalar(select(User).where(User.email == email, User.id != user_id))
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+        user.email = email
+
+    session.commit()
+    session.refresh(user)
+    return AdminUserResponse.from_model(user)
+
+
+@router.post("/users/{user_id}/password-reset", response_model=AdminPasswordResetResponse)
+def reset_user_password(
+    user_id: UUID,
+    payload: AdminPasswordResetInput,
+    session: Session = Depends(get_session),
+    current_admin: User = Depends(verify_admin),
+) -> AdminPasswordResetResponse:
+    del current_admin
+
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    generated_password = None
+    password = payload.password
+    if password is None:
+        generated_password = secrets.token_urlsafe(18)
+        password = generated_password
+    elif len(password) < 8:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be at least 8 characters")
+
+    user.hashed_password = hash_password(password)
+    session.commit()
+    session.refresh(user)
+    return AdminPasswordResetResponse(
+        user=AdminUserResponse.from_model(user),
+        generated_password=generated_password,
+    )
 
 
 @router.delete("/users/{user_id}")

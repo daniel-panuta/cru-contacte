@@ -15,6 +15,9 @@ backend/.dockerignore
 frontend/.dockerignore
 frontend/.gitignore
 backend/api/__pycache__/
+backend/.pytest_cache
+.pytest_cache
+
 
 # Security: never commit local environment or secret material
 .env

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+from time import perf_counter
+
 from config import settings
 from database import SessionLocal
 from fastapi import FastAPI
@@ -12,6 +15,7 @@ from routers.contacts import router as contacts_router
 from sqlalchemy import select
 
 app = FastAPI(title="CRM Contacte API")
+logger = logging.getLogger("crm.api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,7 +33,10 @@ def health_check() -> dict[str, str]:
 
 @app.middleware("http")
 async def add_security_headers(request, call_next):
+    started_at = perf_counter()
     response = await call_next(request)
+    duration_ms = (perf_counter() - started_at) * 1000
+    logger.info("%s %s completed in %.1f ms", request.method, request.url.path, duration_ms)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

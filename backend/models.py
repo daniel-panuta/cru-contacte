@@ -73,3 +73,9 @@ class Log(Base):
 
 
 Index("ix_contacts_created_at_desc", Contact.created_at.desc())
+Index("ix_contacts_name", Contact.name)
+Index("ix_contacts_firstname", Contact.firstname)
+Index("ix_contacts_tel1", Contact.tel1)
+Index("ix_contacts_email", Contact.email)
+Index("ix_contacts_created_by", Contact.created_by)
+Index("ix_contact_history_contact_id", ContactHistory.contact_id)
