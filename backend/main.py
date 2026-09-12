@@ -22,6 +22,11 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+def health_check() -> dict[str, str]:
+    return {"status": "ok", "service": "CRM Contacte API"}
+
+
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
