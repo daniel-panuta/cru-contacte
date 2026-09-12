@@ -13,10 +13,10 @@ export default function ContactForm({ title, subtitle, formData, errors, loading
         <p className="crm-page-subtitle">{subtitle}</p>
       </section>
 
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="crm-card space-y-8">
         {CONTACT_FORM_FIELDS.map((section) => (
-          <section key={section.title} className="crm-card space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">{section.title}</h2>
+          <fieldset key={section.title} className="space-y-4 border-t border-slate-200 pt-6 first:border-t-0 first:pt-0">
+            <legend className="text-lg font-semibold text-slate-900">{section.title}</legend>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {section.fields.map((field) => (
                 <label key={field.name} className="block space-y-2">
@@ -41,10 +41,10 @@ export default function ContactForm({ title, subtitle, formData, errors, loading
             {section.title === 'Telefoane' && fieldError(errors, ['tel1']) ? (
               <p className="text-sm text-red-600">{fieldError(errors, ['tel1'])}</p>
             ) : null}
-          </section>
+          </fieldset>
         ))}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
           <button type="button" onClick={onCancel} className="crm-button-secondary">
             Anuleaza
           </button>

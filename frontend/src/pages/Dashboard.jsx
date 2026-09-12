@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../lib/api'
 import ContactCard from '../components/ContactCard'
 import ContactsDirectory from '../components/ContactsDirectory'
 import SearchBar from '../components/SearchBar'
+import api from '../lib/api'
 
 export default function Dashboard({ user }) {
   const navigate = useNavigate()
@@ -18,6 +18,7 @@ export default function Dashboard({ user }) {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadContacts() {
       setLoading(true)
@@ -30,13 +31,14 @@ export default function Dashboard({ user }) {
             limit: 50,
             offset: 0,
           },
+          signal: controller.signal,
         })
 
         if (!ignore) {
           setContacts(response.data)
         }
       } catch (err) {
-        if (!ignore) {
+        if (!ignore && err.code !== 'ERR_CANCELED') {
           setError(err.response?.data?.detail || 'Nu am putut incarca lista de contacte.')
         }
       } finally {
@@ -50,6 +52,7 @@ export default function Dashboard({ user }) {
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [searchTerm])
 

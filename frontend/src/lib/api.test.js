@@ -14,10 +14,12 @@ describe('api client', () => {
   beforeEach(() => {
     const storage = createStorage()
     vi.stubGlobal('localStorage', storage)
+    vi.stubEnv('VITE_API_URL', '')
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
     vi.resetModules()
   })
 
